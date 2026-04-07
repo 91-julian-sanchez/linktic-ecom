@@ -247,6 +247,14 @@ docker compose up -d --build
 
 > Databases initialize automatically. The catalog is seeded with 15 products on first run.
 
+### API Documentation (Swagger)
+
+Once the stack is running, the interactive API docs are available at:
+
+**[http://localhost:3000/api/docs](http://localhost:3000/api/docs)**
+
+The OpenAPI JSON spec is available at `http://localhost:3000/api/docs-json`.
+
 ### Verify services are running
 
 ```bash
