@@ -4,6 +4,8 @@ E-commerce platform developed under a microservices architecture using NestJS, w
 
 ## Architecture
 
+![Architecture Diagram](docs/architecture.svg)
+
 The platform follows the **Database-per-service** pattern, ensuring decoupling and separation of concerns:
 
 1. **API Gateway**: Single point of entry for the web application. Exposes a REST API and communicates internally via TCP protocol with microservices.
