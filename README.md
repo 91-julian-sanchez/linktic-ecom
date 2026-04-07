@@ -215,6 +215,8 @@ Interactive API docs are served by the API Gateway at:
 http://localhost:3000/api/docs
 ```
 
+![Swagger UI](docs/screenshots/swagger.png)
+
 The Swagger UI lets you explore and test all endpoints directly in the browser — no Postman required. The raw OpenAPI spec is also available at `http://localhost:3000/api/docs-json`.
 
 ### Verify services are running
