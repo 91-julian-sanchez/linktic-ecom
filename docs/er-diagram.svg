@@ -1,0 +1,203 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 480" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000033"/>
+    </filter>
+    <marker id="arrow-fk" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6366f1"/>
+    </marker>
+    <marker id="arrow-ref" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="860" height="480" fill="#0f172a" rx="12"/>
+
+  <!-- Title -->
+  <text x="430" y="36" text-anchor="middle" fill="#f1f5f9" font-size="17" font-weight="700" letter-spacing="0.5">Entity-Relationship Diagram</text>
+
+  <!-- ══════════════════════════════════════════════
+       ORDERS SERVICE DB boundary
+  ═══════════════════════════════════════════════ -->
+  <rect x="20" y="56" width="570" height="400" rx="10" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="305" y="74" text-anchor="middle" fill="#475569" font-size="11" font-weight="600" letter-spacing="1">ecommerce_orders_db</text>
+
+  <!-- ──── orders table ──── -->
+  <!-- Header -->
+  <rect x="40" y="84" width="220" height="34" rx="6" fill="#6366f1" filter="url(#shadow)"/>
+  <text x="150" y="106" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">orders</text>
+  <!-- Body -->
+  <rect x="40" y="118" width="220" height="284" rx="0" fill="#1e293b" stroke="#6366f1" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="40" y="118" width="220" height="284" rx="6" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+
+  <!-- rows -->
+  <!-- PK row highlight -->
+  <rect x="41" y="119" width="218" height="30" rx="5" fill="#312e81" opacity="0.5"/>
+  <text x="55" y="139" fill="#fbbf24" font-size="10" font-weight="700">PK</text>
+  <text x="82" y="139" fill="#e2e8f0" font-size="11">id</text>
+  <text x="255" y="139" text-anchor="end" fill="#64748b" font-size="10">UUID</text>
+
+  <line x1="40" y1="149" x2="260" y2="149" stroke="#334155" stroke-width="1"/>
+  <text x="55" y="166" fill="#64748b" font-size="10">   </text>
+  <text x="82" y="166" fill="#e2e8f0" font-size="11">customerEmail</text>
+  <text x="255" y="166" text-anchor="end" fill="#64748b" font-size="10">VARCHAR</text>
+
+  <line x1="40" y1="175" x2="260" y2="175" stroke="#334155" stroke-width="1"/>
+  <text x="82" y="192" fill="#e2e8f0" font-size="11">totalAmount</text>
+  <text x="255" y="192" text-anchor="end" fill="#64748b" font-size="10">DECIMAL(10,2)</text>
+
+  <line x1="40" y1="201" x2="260" y2="201" stroke="#334155" stroke-width="1"/>
+  <text x="82" y="218" fill="#e2e8f0" font-size="11">status</text>
+  <text x="255" y="218" text-anchor="end" fill="#64748b" font-size="10">ENUM</text>
+
+  <line x1="40" y1="227" x2="260" y2="227" stroke="#334155" stroke-width="1"/>
+  <!-- UNIQUE badge -->
+  <rect x="50" y="231" width="26" height="13" rx="3" fill="#1d4ed8" opacity="0.7"/>
+  <text x="63" y="241" text-anchor="middle" fill="#93c5fd" font-size="8" font-weight="600">UNI</text>
+  <text x="82" y="244" fill="#e2e8f0" font-size="11">idempotencyKey</text>
+  <text x="255" y="244" text-anchor="end" fill="#64748b" font-size="10">VARCHAR NULL</text>
+
+  <line x1="40" y1="253" x2="260" y2="253" stroke="#334155" stroke-width="1"/>
+  <text x="82" y="270" fill="#e2e8f0" font-size="11">createdAt</text>
+  <text x="255" y="270" text-anchor="end" fill="#64748b" font-size="10">TIMESTAMP</text>
+
+  <line x1="40" y1="279" x2="260" y2="279" stroke="#334155" stroke-width="1"/>
+  <text x="82" y="296" fill="#e2e8f0" font-size="11">updatedAt</text>
+  <text x="255" y="296" text-anchor="end" fill="#64748b" font-size="10">TIMESTAMP</text>
+
+  <line x1="40" y1="305" x2="260" y2="305" stroke="#334155" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="55" y="320" fill="#475569" font-size="9" font-style="italic">1</text>
+  <text x="82" y="320" fill="#64748b" font-size="10" font-style="italic">items →  order_items[]</text>
+  <text x="55" y="338" fill="#475569" font-size="9" font-style="italic">   </text>
+  <text x="82" y="338" fill="#64748b" font-size="10" font-style="italic">(cascade)</text>
+  <text x="55" y="356" fill="#475569" font-size="9" font-style="italic">   </text>
+  <text x="82" y="356" fill="#64748b" font-size="10" font-style="italic">OneToMany</text>
+  <text x="55" y="374" fill="#475569" font-size="9" font-style="italic">   </text>
+  <text x="82" y="374" fill="#64748b" font-size="10" font-style="italic">synchronize: true</text>
+  <text x="55" y="392" fill="#475569" font-size="9" font-style="italic">   </text>
+  <text x="82" y="392" fill="#64748b" font-size="10" font-style="italic">(auto schema)</text>
+
+  <!-- ──── order_items table ──── -->
+  <rect x="320" y="84" width="240" height="34" rx="6" fill="#6366f1" filter="url(#shadow)"/>
+  <text x="440" y="106" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">order_items</text>
+  <rect x="320" y="118" width="240" height="232" rx="6" fill="#1e293b" stroke="#6366f1" stroke-width="1.5"/>
+
+  <!-- PK -->
+  <rect x="321" y="119" width="238" height="30" rx="5" fill="#312e81" opacity="0.5"/>
+  <text x="335" y="139" fill="#fbbf24" font-size="10" font-weight="700">PK</text>
+  <text x="362" y="139" fill="#e2e8f0" font-size="11">id</text>
+  <text x="555" y="139" text-anchor="end" fill="#64748b" font-size="10">UUID</text>
+
+  <line x1="320" y1="149" x2="560" y2="149" stroke="#334155" stroke-width="1"/>
+  <!-- FK highlight -->
+  <rect x="321" y="150" width="238" height="25" rx="0" fill="#4338ca" opacity="0.2"/>
+  <text x="335" y="166" fill="#a5b4fc" font-size="10" font-weight="700">FK</text>
+  <text x="362" y="166" fill="#e2e8f0" font-size="11">orderId</text>
+  <text x="555" y="166" text-anchor="end" fill="#64748b" font-size="10">UUID</text>
+
+  <line x1="320" y1="175" x2="560" y2="175" stroke="#334155" stroke-width="1"/>
+  <!-- logical ref -->
+  <text x="335" y="192" fill="#94a3b8" font-size="10">ref</text>
+  <text x="362" y="192" fill="#e2e8f0" font-size="11">productId</text>
+  <text x="555" y="192" text-anchor="end" fill="#64748b" font-size="10">UUID</text>
+
+  <line x1="320" y1="201" x2="560" y2="201" stroke="#334155" stroke-width="1"/>
+  <text x="362" y="218" fill="#e2e8f0" font-size="11">productName</text>
+  <text x="555" y="218" text-anchor="end" fill="#64748b" font-size="10">VARCHAR ★</text>
+
+  <line x1="320" y1="227" x2="560" y2="227" stroke="#334155" stroke-width="1"/>
+  <text x="362" y="244" fill="#e2e8f0" font-size="11">quantity</text>
+  <text x="555" y="244" text-anchor="end" fill="#64748b" font-size="10">INTEGER</text>
+
+  <line x1="320" y1="253" x2="560" y2="253" stroke="#334155" stroke-width="1"/>
+  <text x="362" y="270" fill="#e2e8f0" font-size="11">unitPrice</text>
+  <text x="555" y="270" text-anchor="end" fill="#64748b" font-size="10">DECIMAL(10,2) ★</text>
+
+  <line x1="320" y1="279" x2="560" y2="279" stroke="#334155" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="362" y="296" fill="#64748b" font-size="10" font-style="italic">ManyToOne → orders</text>
+  <text x="362" y="314" fill="#64748b" font-size="10" font-style="italic">N items per order</text>
+
+  <!-- ══════════════════════════════════════════════
+       CATALOG SERVICE DB boundary
+  ═══════════════════════════════════════════════ -->
+  <rect x="620" y="56" width="220" height="400" rx="10" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="730" y="74" text-anchor="middle" fill="#475569" font-size="11" font-weight="600" letter-spacing="1">ecommerce_catalog_db</text>
+
+  <!-- ──── products table ──── -->
+  <rect x="640" y="84" width="180" height="34" rx="6" fill="#10b981" filter="url(#shadow)"/>
+  <text x="730" y="106" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">products</text>
+  <rect x="640" y="118" width="180" height="258" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+
+  <!-- PK -->
+  <rect x="641" y="119" width="178" height="30" rx="5" fill="#064e3b" opacity="0.8"/>
+  <text x="655" y="139" fill="#fbbf24" font-size="10" font-weight="700">PK</text>
+  <text x="678" y="139" fill="#e2e8f0" font-size="11">id</text>
+  <text x="815" y="139" text-anchor="end" fill="#64748b" font-size="10">UUID</text>
+
+  <line x1="640" y1="149" x2="820" y2="149" stroke="#334155" stroke-width="1"/>
+  <rect x="641" y="150" width="178" height="25" rx="0" fill="#065f46" opacity="0.4"/>
+  <text x="655" y="166" fill="#6ee7b7" font-size="9" font-weight="600">UNI</text>
+  <text x="678" y="166" fill="#e2e8f0" font-size="11">sku</text>
+  <text x="815" y="166" text-anchor="end" fill="#64748b" font-size="10">VARCHAR</text>
+
+  <line x1="640" y1="175" x2="820" y2="175" stroke="#334155" stroke-width="1"/>
+  <text x="678" y="192" fill="#e2e8f0" font-size="11">name</text>
+  <text x="815" y="192" text-anchor="end" fill="#64748b" font-size="10">VARCHAR</text>
+
+  <line x1="640" y1="201" x2="820" y2="201" stroke="#334155" stroke-width="1"/>
+  <text x="678" y="218" fill="#e2e8f0" font-size="11">description</text>
+  <text x="815" y="218" text-anchor="end" fill="#64748b" font-size="10">TEXT</text>
+
+  <line x1="640" y1="227" x2="820" y2="227" stroke="#334155" stroke-width="1"/>
+  <text x="678" y="244" fill="#e2e8f0" font-size="11">price</text>
+  <text x="815" y="244" text-anchor="end" fill="#64748b" font-size="10">DECIMAL(10,2)</text>
+
+  <line x1="640" y1="253" x2="820" y2="253" stroke="#334155" stroke-width="1"/>
+  <text x="678" y="270" fill="#e2e8f0" font-size="11">stock</text>
+  <text x="815" y="270" text-anchor="end" fill="#64748b" font-size="10">INTEGER</text>
+
+  <line x1="640" y1="279" x2="820" y2="279" stroke="#334155" stroke-width="1"/>
+  <text x="678" y="296" fill="#e2e8f0" font-size="11">createdAt</text>
+  <text x="815" y="296" text-anchor="end" fill="#64748b" font-size="10">TIMESTAMP</text>
+
+  <line x1="640" y1="305" x2="820" y2="305" stroke="#334155" stroke-width="1"/>
+  <text x="678" y="322" fill="#e2e8f0" font-size="11">updatedAt</text>
+  <text x="815" y="322" text-anchor="end" fill="#64748b" font-size="10">TIMESTAMP</text>
+
+  <line x1="640" y1="331" x2="820" y2="331" stroke="#334155" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="678" y="348" fill="#64748b" font-size="10" font-style="italic">migrations: true</text>
+  <text x="678" y="366" fill="#64748b" font-size="10" font-style="italic">synchronize: false</text>
+
+  <!-- ══════════════════════════════════════════════
+       RELATIONS
+  ═══════════════════════════════════════════════ -->
+
+  <!-- orders (1) ──── (N) order_items  [FK orderId] -->
+  <line x1="260" y1="162" x2="318" y2="162" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow-fk)"/>
+  <!-- cardinality labels -->
+  <text x="265" y="157" fill="#6366f1" font-size="12" font-weight="700">1</text>
+  <text x="300" y="157" fill="#6366f1" font-size="12" font-weight="700">N</text>
+
+  <!-- order_items (ref) ···> products  [logical, no FK — different DB] -->
+  <line x1="560" y1="188" x2="638" y2="162" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow-ref)"/>
+  <text x="578" y="182" fill="#94a3b8" font-size="9">ref</text>
+
+  <!-- ══════════════════════════════════════════════
+       LEGEND
+  ═══════════════════════════════════════════════ -->
+  <rect x="20" y="400" width="570" height="48" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="1.5"/>
+
+  <rect x="36" y="413" width="26" height="13" rx="3" fill="#fbbf24" opacity="0.9"/>
+  <text x="49" y="423" text-anchor="middle" fill="#0f172a" font-size="8" font-weight="800">PK</text>
+  <text x="68" y="424" fill="#94a3b8" font-size="10">Primary Key</text>
+
+  <rect x="155" y="413" width="26" height="13" rx="3" fill="#6366f1" opacity="0.8"/>
+  <text x="168" y="423" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">FK</text>
+  <text x="187" y="424" fill="#94a3b8" font-size="10">Foreign Key (same DB)</text>
+
+  <line x1="340" y1="419" x2="365" y2="419" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-ref)"/>
+  <text x="372" y="424" fill="#94a3b8" font-size="10">Logical ref (cross-DB, no FK)</text>
+
+  <text x="36" y="442" fill="#64748b" font-size="10">★  Denormalized at order creation time — preserves historical name and price</text>
+</svg>

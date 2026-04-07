@@ -135,6 +135,8 @@ Content-Type: application/json
 
 ### Data Model
 
+![ER Diagram](docs/er-diagram.svg)
+
 ```
 orders
 ├── id              UUID  PK
