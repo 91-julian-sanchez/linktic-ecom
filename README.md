@@ -1,80 +1,321 @@
-# E-commerce Platform (Microservices Backend)
+# Linktic Ecom — E-commerce Microservices Platform
 
-E-commerce platform developed under a microservices architecture using NestJS, with simulated local deployment using Docker Compose.
+> Technical assessment: microservices-based e-commerce platform built with NestJS, PostgreSQL, Docker and React.
 
-## Architecture
+---
+
+## Table of Contents
+
+1. [Architecture](#1-architecture)
+2. [Cloud Design & Local Simulation](#2-cloud-design--local-simulation)
+3. [CI/CD Pipeline](#3-cicd-pipeline)
+4. [Backend Services](#4-backend-services)
+5. [Frontend](#5-frontend-bonus)
+6. [Running the Project](#6-running-the-project)
+7. [Technical Decisions](#7-technical-decisions)
+
+---
+
+## 1. Architecture
 
 ![Architecture Diagram](docs/architecture.svg)
 
-The platform follows the **Database-per-service** pattern, ensuring decoupling and separation of concerns:
+The platform is built on a **microservices architecture** with a **database-per-service** pattern, ensuring full decoupling between domains.
 
-1. **API Gateway**: Single point of entry for the web application. Exposes a REST API and communicates internally via TCP protocol with microservices.
-2. **Catalog Service**: Microservice in charge of managing the product catalog. It has its own database (`ecommerce_catalog_db`).
-3. **Orders Service**: Microservice in charge of processing order creation. It communicates with the *Catalog Service* via TCP synchronously to validate products and prices. It has its own database (`ecommerce_orders_db`).
-4. **Frontend App**: User interface developed in React with Vite that allows browsing the catalog and making purchases by consuming the *API Gateway*.
+| Component | Technology | Role |
+|---|---|---|
+| **API Gateway** | NestJS · HTTP :3000 | Single entry point — routes REST calls to internal services |
+| **Catalog Service** | NestJS · TCP :3001 | Manages product catalog and inventory |
+| **Orders Service** | NestJS · TCP :3002 | Processes orders, validates products, enforces business rules |
+| **Catalog DB** | PostgreSQL :5432 | Exclusive storage for the catalog domain |
+| **Orders DB** | PostgreSQL :5433 | Exclusive storage for the orders domain |
+| **Frontend** | React + Vite · Nginx :8080 | UI consuming the API Gateway |
 
-Both backend services use PostgreSQL as the database and TypeORM as the ORM. Data access logic is encapsulated using the Repository Pattern.
+### Service Communication
 
-## Prerequisites
+- **Client → API Gateway**: standard HTTP/REST
+- **API Gateway → Microservices**: NestJS native **TCP transport** (synchronous, low-latency)
+- **Orders → Catalog**: internal TCP call to validate product existence and stock before creating an order
 
-- Node.js (v18+)
+### Scalability & Separation of Concerns
+
+- Each service owns its schema — no cross-database joins
+- Services can be scaled, deployed, and updated independently
+- The API Gateway is the only component exposed externally; microservices are internal-only
+- Business logic is isolated per domain (catalog rules in Catalog Service, order rules in Orders Service)
+
+---
+
+## 2. Cloud Design & Local Simulation
+
+The full stack runs locally via **Docker Compose**, simulating a cloud deployment with isolated networking, health checks, and environment-variable-driven configuration.
+
+### Container Map
+
+```
+ecommerce_network (bridge)
+├── ecommerce_catalog_db   PostgreSQL 15  :5432   (internal)
+├── ecommerce_orders_db    PostgreSQL 15  :5433   (internal, mapped from :5432)
+├── catalog-service        NestJS TCP     :3001   (internal)
+├── orders-service         NestJS TCP     :3002   (internal)
+├── api-gateway            NestJS HTTP    :3000   ← exposed
+└── frontend               Nginx          :8080   ← exposed
+```
+
+### Environment Configuration
+
+All service connections are driven by environment variables with local fallbacks, making them ready for any cloud provider:
+
+```yaml
+# orders-service (example)
+CATALOG_SERVICE_HOST: catalog-service   # Docker service name / K8s DNS / ECS service
+CATALOG_SERVICE_PORT: 3001
+DB_HOST: ecommerce_orders_db
+DB_PORT: 5432
+```
+
+### Cloud Deployment Path (production)
+
+| Component | AWS equivalent |
+|---|---|
+| Services | ECS Fargate tasks |
+| Databases | RDS PostgreSQL |
+| API Gateway | ALB + ECS service |
+| Frontend | S3 + CloudFront |
+| Networking | VPC with private subnets for services, public for ALB |
+
+---
+
+## 3. CI/CD Pipeline
+
+GitHub Actions pipeline defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+### Triggers
+
+- Push to `main`
+- Pull requests targeting `main`
+
+### Stages
+
+```
+┌─────────────────────────────────────────────────┐
+│  build-and-test  (matrix: 3 services in parallel)│
+│  ├── actions/checkout                            │
+│  ├── Node.js 18 setup + npm cache               │
+│  ├── npm ci                                      │
+│  ├── npm run build                               │
+│  └── npm run test --if-present                   │
+└──────────────────────┬──────────────────────────┘
+                       │ on main branch only
+┌──────────────────────▼──────────────────────────┐
+│  release                                         │
+│  ├── git config (automation user)                │
+│  ├── version bump + CHANGELOG generation         │
+│  └── cloud deployment simulation                 │
+└─────────────────────────────────────────────────┘
+```
+
+The matrix strategy builds and tests **api-gateway**, **catalog-service** and **orders-service** in parallel, failing fast if any service breaks.
+
+---
+
+## 4. Backend Services
+
+### 4.1 Catalog Service — API Reference
+
+All endpoints go through the **API Gateway** at `http://localhost:3000`.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/products` | List all products |
+| `GET` | `/products/:id` | Get product by UUID |
+| `POST` | `/products` | Create a new product |
+
+**POST /products — request body**
+```json
+{
+  "sku": "MBP16-M4",
+  "name": "MacBook Pro 16\" (M4)",
+  "description": "Apple M4 chip, 24GB RAM, 512GB SSD",
+  "price": 2499,
+  "stock": 8
+}
+```
+
+The catalog database is seeded on first run with **15 Apple products** (MacBook Air, MacBook Pro, Mac Studio, Mac Pro, iMac lines).
+
+### 4.2 Orders Service — API Reference
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/orders` | List all orders with line items |
+| `POST` | `/orders` | Create an order |
+
+**POST /orders — request body**
+```json
+{
+  "customerEmail": "user@example.com",
+  "items": [
+    { "productId": "<uuid>", "quantity": 2 },
+    { "productId": "<uuid>", "quantity": 1 }
+  ]
+}
+```
+
+**Headers**
+```
+Idempotency-Key: <unique-uuid>   (optional — prevents duplicate orders on retry)
+Content-Type: application/json
+```
+
+**Business validations applied:**
+- `customerEmail` must be a valid email address
+- `items` array must have at least one item with `quantity ≥ 1`
+- All `productId` values must exist in the Catalog Service
+- Each product must have sufficient stock
+
+### Data Model
+
+```
+orders
+├── id              UUID  PK
+├── customerEmail   VARCHAR
+├── totalAmount     DECIMAL(10,2)
+├── status          ENUM (PENDING | COMPLETED | CANCELLED)
+├── idempotencyKey  VARCHAR UNIQUE NULLABLE
+├── createdAt
+└── updatedAt
+
+order_items
+├── id              UUID  PK
+├── orderId         FK → orders.id
+├── productId       UUID  (reference, not FK — decoupled by design)
+├── productName     VARCHAR  (denormalized for historical accuracy)
+├── quantity        INTEGER
+└── unitPrice       DECIMAL(10,2)
+
+products  (catalog DB)
+├── id              UUID  PK
+├── sku             VARCHAR UNIQUE
+├── name            VARCHAR
+├── description     TEXT
+├── price           DECIMAL(10,2)
+└── stock           INTEGER
+```
+
+---
+
+## 5. Frontend (Bonus)
+
+A React + Vite single-page application served via Nginx.
+
+### Catalog & Shopping Cart
+
+![Catalog view with shopping cart](docs/screenshots/catalog.png)
+
+- Browse the full product catalog with stock indicators
+- Add products to cart (increments quantity on repeat)
+- Remove individual items from cart
+- See real-time cart total
+
+### Orders History
+
+![Orders list view](docs/screenshots/orders.png)
+
+- Place orders with email and idempotency key
+- View all past orders with status badges
+- Each order shows line items and individual prices
+
+---
+
+## 6. Running the Project
+
+### Prerequisites
+
 - Docker and Docker Compose
 
-## Project Initialization
-
-### 1. Spin up Infrastructure
-
-The project uses Docker Compose to set up isolated databases.
+### One-command setup (recommended)
 
 ```bash
-docker-compose up -d
+docker compose up -d --build
 ```
 
-This will start:
-- `ecommerce_catalog_db` on port `5432`
-- `ecommerce_orders_db` on port `5433`
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:8080 |
+| API Gateway | http://localhost:3000 |
 
-### 2. Run Microservices
+> Databases initialize automatically. The catalog is seeded with 15 products on first run.
 
-Each microservice must install its dependencies in its respective directory and be started individually.
-
-#### API Gateway
-```bash
-cd api-gateway
-npm install
-npm run start:dev
-```
-
-#### Catalog Service
-```bash
-cd catalog-service
-npm install
-npm run start:dev
-```
-
-#### Orders Service
-```bash
-cd orders-service
-npm install
-npm run start:dev
-```
-
-### 3. Run Frontend
-
-The web application is located in the `frontend` directory and is built with React and Vite.
+### Verify services are running
 
 ```bash
-cd frontend
-npm install
-npm run dev
+docker compose ps
 ```
 
-The application will be available by default at `http://localhost:5173`.
+```bash
+# List products
+curl http://localhost:3000/products
 
-## Relevant Patterns and Technical Decisions
+# Create an order
+curl -X POST http://localhost:3000/orders \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{
+    "customerEmail": "test@example.com",
+    "items": [{ "productId": "<id-from-products>", "quantity": 1 }]
+  }'
 
-- **Microservices with TCP**: Instead of using HTTP or message queues (RabbitMQ), NestJS native TCP transport is used for direct and fast order validation communication.
-- **Database-per-service**: Independent storage, avoiding strict "foreign keys" between the Catalog Service and Orders Service.
-- **Decoupled Microservices**: Denormalization (`productName` in `OrderItem`) is used to optimize reads and provide historical context.
-- **Idempotency**: Support for `Idempotency-Key` in order creation endpoints.
-- **Repositories**: Database interaction exclusively through the Repository Pattern.
+# List orders
+curl http://localhost:3000/orders
+```
+
+### Stop and clean up
+
+```bash
+docker compose down          # stop containers
+docker compose down -v       # stop and remove volumes (resets databases)
+```
+
+### Local development (without Docker)
+
+Requires Node.js 18+ and two running PostgreSQL instances.
+
+```bash
+# Terminal 1 — databases only
+docker compose up -d ecommerce_catalog_db ecommerce_orders_db
+
+# Terminal 2
+cd catalog-service && npm install && npm run start:dev
+
+# Terminal 3
+cd orders-service && npm install && npm run start:dev
+
+# Terminal 4
+cd api-gateway && npm install && npm run start:dev
+
+# Terminal 5
+cd frontend && npm install && npm run dev   # http://localhost:5173
+```
+
+### Running tests
+
+```bash
+cd api-gateway    && npm test
+cd catalog-service && npm test
+cd orders-service  && npm test
+```
+
+---
+
+## 7. Technical Decisions
+
+| Decision | Rationale |
+|---|---|
+| **NestJS TCP transport** | Native to NestJS, no extra infrastructure (no RabbitMQ/Kafka needed for synchronous calls), lower latency than HTTP for internal communication |
+| **Database-per-service** | Enforces domain boundaries — the Orders Service cannot directly query the Catalog database, forcing proper API contracts |
+| **Denormalized `productName` in order items** | Orders must preserve the product name and price at the time of purchase, regardless of future catalog changes |
+| **Idempotency key on order creation** | Prevents duplicate orders caused by network retries or double-clicks |
+| **Multi-stage Dockerfiles** | Smaller production images — build tools stay in the builder stage, only the compiled output ships |
+| **Health checks + `depends_on`** | Ensures databases are ready before services start, avoiding connection errors on cold boot |
+| **`synchronize: false` + migrations (catalog)** | Production-safe schema management with explicit migration history |
