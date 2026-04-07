@@ -1,0 +1,110 @@
+services:
+  ecommerce_catalog_db:
+    image: postgres:15-alpine
+    container_name: ecommerce_catalog_db
+    environment:
+      POSTGRES_USER: catalog_user
+      POSTGRES_PASSWORD: catalog_password
+      POSTGRES_DB: ecommerce_catalog_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - catalog_db_data:/var/lib/postgresql/data
+    networks:
+      - ecommerce_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog_user -d ecommerce_catalog_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ecommerce_orders_db:
+    image: postgres:15-alpine
+    container_name: ecommerce_orders_db
+    environment:
+      POSTGRES_USER: orders_user
+      POSTGRES_PASSWORD: orders_password
+      POSTGRES_DB: ecommerce_orders_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - orders_db_data:/var/lib/postgresql/data
+    networks:
+      - ecommerce_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders_user -d ecommerce_orders_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  catalog-service:
+    build: ./catalog-service
+    container_name: catalog-service
+    environment:
+      DB_HOST: ecommerce_catalog_db
+      DB_PORT: 5432
+      DB_USER: catalog_user
+      DB_PASSWORD: catalog_password
+      DB_NAME: ecommerce_catalog_db
+    depends_on:
+      ecommerce_catalog_db:
+        condition: service_healthy
+    networks:
+      - ecommerce_network
+
+  orders-service:
+    build: ./orders-service
+    container_name: orders-service
+    environment:
+      DB_HOST: ecommerce_orders_db
+      DB_PORT: 5432
+      DB_USER: orders_user
+      DB_PASSWORD: orders_password
+      DB_NAME: ecommerce_orders_db
+      CATALOG_SERVICE_HOST: catalog-service
+      CATALOG_SERVICE_PORT: 3001
+    depends_on:
+      ecommerce_orders_db:
+        condition: service_healthy
+      catalog-service:
+        condition: service_started
+    networks:
+      - ecommerce_network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      CATALOG_SERVICE_HOST: catalog-service
+      CATALOG_SERVICE_PORT: 3001
+      ORDERS_SERVICE_HOST: orders-service
+      ORDERS_SERVICE_PORT: 3002
+    depends_on:
+      - catalog-service
+      - orders-service
+    networks:
+      - ecommerce_network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:3000
+    container_name: frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - ecommerce_network
+
+networks:
+  ecommerce_network:
+    driver: bridge
+
+volumes:
+  catalog_db_data:
+  orders_db_data:

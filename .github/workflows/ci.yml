@@ -1,0 +1,71 @@
+name: CI/CD Microservices
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api-gateway, catalog-service, orders-service]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './${{ matrix.service }}/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./${{ matrix.service }}
+        run: npm ci
+
+      - name: Build service
+        working-directory: ./${{ matrix.service }}
+        run: npm run build
+
+      - name: Run tests (if any)
+        working-directory: ./${{ matrix.service }}
+        run: npm run test --if-present
+
+  release:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Setup Git User
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Simulate Version Bump and Changelog Generation
+        run: |
+          # In a real project, semantic-release or similar would be used.
+          echo "Simulating version increment based on commits..."
+          echo "Simulating CHANGELOG.md generation..."
+          echo "## [Automatic Deployment] - $(date)" >> CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "chore(release): generate changelog and bump version [skip ci]" || echo "No changes to commit"
+
+      - name: Simulate Cloud Deployment
+        run: |
+          echo "Simulating deployment to AWS/GCP/Azure using the new tag..."
+          echo "Deployment finished successfully."
