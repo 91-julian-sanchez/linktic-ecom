@@ -45,6 +45,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -56,16 +59,43 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
 
-      - name: Simulate Version Bump and Changelog Generation
+      - name: Bump versions (npm version patch)
         run: |
-          # In a real project, semantic-release or similar would be used.
-          echo "Simulating version increment based on commits..."
-          echo "Simulating CHANGELOG.md generation..."
-          echo "## [Automatic Deployment] - $(date)" >> CHANGELOG.md
-          git add CHANGELOG.md
-          git commit -m "chore(release): generate changelog and bump version [skip ci]" || echo "No changes to commit"
+          for service in api-gateway catalog-service orders-service; do
+            cd $service
+            npm version patch --no-git-tag-version
+            cd ..
+          done
+
+      - name: Generate CHANGELOG entry
+        run: |
+          VERSION=$(node -p "require('./api-gateway/package.json').version")
+          {
+            echo "## [${VERSION}] - $(date -u +%Y-%m-%d)"
+            echo ""
+            git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD -- api-gateway catalog-service orders-service || true
+            echo ""
+            echo ""
+          } | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md || \
+          {
+            echo "## [${VERSION}] - $(date -u +%Y-%m-%d)" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            git log --pretty=format:"- %s" -20 -- api-gateway catalog-service orders-service >> CHANGELOG.md || true
+            echo "" >> CHANGELOG.md
+          }
+
+      - name: Commit and tag release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./api-gateway/package.json').version")
+          git add api-gateway/package.json catalog-service/package.json orders-service/package.json CHANGELOG.md
+          git commit -m "chore(release): bump to v${VERSION} [skip ci]" || echo "Nothing to commit"
+          git tag "v${VERSION}"
+          git push origin main --tags
 
       - name: Simulate Cloud Deployment
         run: |
-          echo "Simulating deployment to AWS/GCP/Azure using the new tag..."
+          VERSION=$(node -p "require('./api-gateway/package.json').version")
+          echo "Deploying v${VERSION} to production..."
           echo "Deployment finished successfully."
