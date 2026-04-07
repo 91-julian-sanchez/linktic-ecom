@@ -11,7 +11,6 @@
 3. [Backend Services](#3-backend-services)
 4. [Frontend](#4-frontend-bonus)
 5. [Running the Project](#5-running-the-project)
-6. [Technical Decisions](#6-technical-decisions)
 
 ---
 
@@ -251,27 +250,6 @@ docker compose down          # stop containers
 docker compose down -v       # stop and remove volumes (resets databases)
 ```
 
-### Local development (without Docker)
-
-Requires Node.js 18+ and two running PostgreSQL instances.
-
-```bash
-# Terminal 1 — databases only
-docker compose up -d ecommerce_catalog_db ecommerce_orders_db
-
-# Terminal 2
-cd catalog-service && npm install && npm run start:dev
-
-# Terminal 3
-cd orders-service && npm install && npm run start:dev
-
-# Terminal 4
-cd api-gateway && npm install && npm run start:dev
-
-# Terminal 5
-cd frontend && npm install && npm run dev   # http://localhost:5173
-```
-
 ### Running tests
 
 ```bash
@@ -280,16 +258,3 @@ cd catalog-service && npm test
 cd orders-service  && npm test
 ```
 
----
-
-## 6. Technical Decisions
-
-| Decision | Rationale |
-|---|---|
-| **NestJS TCP transport** | Native to NestJS, no extra infrastructure (no RabbitMQ/Kafka needed for synchronous calls), lower latency than HTTP for internal communication |
-| **Database-per-service** | Enforces domain boundaries — the Orders Service cannot directly query the Catalog database, forcing proper API contracts |
-| **Denormalized `productName` in order items** | Orders must preserve the product name and price at the time of purchase, regardless of future catalog changes |
-| **Idempotency key on order creation** | Prevents duplicate orders caused by network retries or double-clicks |
-| **Multi-stage Dockerfiles** | Smaller production images — build tools stay in the builder stage, only the compiled output ships |
-| **Health checks + `depends_on`** | Ensures databases are ready before services start, avoiding connection errors on cold boot |
-| **`synchronize: false` + migrations (catalog)** | Production-safe schema management with explicit migration history |
