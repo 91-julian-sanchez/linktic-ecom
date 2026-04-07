@@ -34,9 +34,46 @@ jobs:
         working-directory: ./${{ matrix.service }}
         run: npm run build
 
-      - name: Run tests (if any)
+      - name: Run tests with coverage
         working-directory: ./${{ matrix.service }}
-        run: npm run test --if-present
+        run: npm run test:cov -- --reporters=default --reporters=jest-junit
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./test-results
+          JEST_JUNIT_OUTPUT_NAME: junit.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.service }}
+          path: ./${{ matrix.service }}/test-results/junit.xml
+          if-no-files-found: ignore
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: ./${{ matrix.service }}/coverage/lcov.info
+          if-no-files-found: ignore
+
+      - name: Coverage summary
+        if: always()
+        working-directory: ./${{ matrix.service }}
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "### Coverage — ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+            node -e "
+              const s = require('./coverage/coverage-summary.json').total;
+              const fmt = (x) => x.pct.toFixed(1) + '%';
+              console.log('| Metric | Coverage |');
+              console.log('|---|---|');
+              console.log('| Statements | ' + fmt(s.statements) + ' |');
+              console.log('| Branches   | ' + fmt(s.branches)   + ' |');
+              console.log('| Functions  | ' + fmt(s.functions)  + ' |');
+              console.log('| Lines      | ' + fmt(s.lines)      + ' |');
+            " >> $GITHUB_STEP_SUMMARY
+          fi
 
   release:
     needs: build-and-test
