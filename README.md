@@ -7,12 +7,11 @@
 ## Table of Contents
 
 1. [Architecture](#1-architecture)
-2. [Cloud Design & Local Simulation](#2-cloud-design--local-simulation)
-3. [CI/CD Pipeline](#3-cicd-pipeline)
-4. [Backend Services](#4-backend-services)
-5. [Frontend](#5-frontend-bonus)
-6. [Running the Project](#6-running-the-project)
-7. [Technical Decisions](#7-technical-decisions)
+2. [CI/CD Pipeline](#2-cicd-pipeline)
+3. [Backend Services](#3-backend-services)
+4. [Frontend](#4-frontend-bonus)
+5. [Running the Project](#5-running-the-project)
+6. [Technical Decisions](#6-technical-decisions)
 
 ---
 
@@ -46,47 +45,7 @@ The platform is built on a **microservices architecture** with a **database-per-
 
 ---
 
-## 2. Cloud Design & Local Simulation
-
-The full stack runs locally via **Docker Compose**, simulating a cloud deployment with isolated networking, health checks, and environment-variable-driven configuration.
-
-### Container Map
-
-```
-ecommerce_network (bridge)
-├── ecommerce_catalog_db   PostgreSQL 15  :5432   (internal)
-├── ecommerce_orders_db    PostgreSQL 15  :5433   (internal, mapped from :5432)
-├── catalog-service        NestJS TCP     :3001   (internal)
-├── orders-service         NestJS TCP     :3002   (internal)
-├── api-gateway            NestJS HTTP    :3000   ← exposed
-└── frontend               Nginx          :8080   ← exposed
-```
-
-### Environment Configuration
-
-All service connections are driven by environment variables with local fallbacks, making them ready for any cloud provider:
-
-```yaml
-# orders-service (example)
-CATALOG_SERVICE_HOST: catalog-service   # Docker service name / K8s DNS / ECS service
-CATALOG_SERVICE_PORT: 3001
-DB_HOST: ecommerce_orders_db
-DB_PORT: 5432
-```
-
-### Cloud Deployment Path (production)
-
-| Component | AWS equivalent |
-|---|---|
-| Services | ECS Fargate tasks |
-| Databases | RDS PostgreSQL |
-| API Gateway | ALB + ECS service |
-| Frontend | S3 + CloudFront |
-| Networking | VPC with private subnets for services, public for ALB |
-
----
-
-## 3. CI/CD Pipeline
+## 2. CI/CD Pipeline
 
 GitHub Actions pipeline defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
@@ -119,7 +78,7 @@ The matrix strategy builds and tests **api-gateway**, **catalog-service** and **
 
 ---
 
-## 4. Backend Services
+## 3. Backend Services
 
 ### 4.1 Catalog Service — API Reference
 
@@ -205,7 +164,7 @@ products  (catalog DB)
 
 ---
 
-## 5. Frontend (Bonus)
+## 4. Frontend (Bonus)
 
 A React + Vite single-page application served via Nginx.
 
@@ -228,7 +187,7 @@ A React + Vite single-page application served via Nginx.
 
 ---
 
-## 6. Running the Project
+## 5. Running the Project
 
 ### Prerequisites
 
@@ -244,16 +203,19 @@ docker compose up -d --build
 |---|---|
 | Frontend | http://localhost:8080 |
 | API Gateway | http://localhost:3000 |
+| **API Docs (Swagger)** | **http://localhost:3000/api/docs** |
 
 > Databases initialize automatically. The catalog is seeded with 15 products on first run.
 
 ### API Documentation (Swagger)
 
-Once the stack is running, the interactive API docs are available at:
+Interactive API docs are served by the API Gateway at:
 
-**[http://localhost:3000/api/docs](http://localhost:3000/api/docs)**
+```
+http://localhost:3000/api/docs
+```
 
-The OpenAPI JSON spec is available at `http://localhost:3000/api/docs-json`.
+The Swagger UI lets you explore and test all endpoints directly in the browser — no Postman required. The raw OpenAPI spec is also available at `http://localhost:3000/api/docs-json`.
 
 ### Verify services are running
 
@@ -316,7 +278,7 @@ cd orders-service  && npm test
 
 ---
 
-## 7. Technical Decisions
+## 6. Technical Decisions
 
 | Decision | Rationale |
 |---|---|
